@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from supabase import create_client, Client
 from datetime import datetime
 import pytz
@@ -6,7 +6,7 @@ import pytz
 app = Flask(__name__)
 
 # ==========================================
-# KONFIGURASI SUPABASE (Masukkan Kunci Anda)
+# KONFIGURASI SUPABASE (Kunci Anda Sudah Terpasang)
 # ==========================================
 SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co/rest/v1/"
 SUPABASE_KEY = "sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8"
@@ -14,14 +14,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
 
 # ==========================================
-# 1. RUTE HALAMAN UTAMA (Mencegah Crash di Vercel)
+# 1. RUTE HALAMAN UTAMA (Membuka Dashboard Web Admin)
 # ==========================================
 @app.route('/', methods=['GET'])
 def halaman_utama():
-    return jsonify({
-        "status": "Online",
-        "pesan": "Mesin Absensi Vercel Siap Menerima Data!"
-    }), 200
+    # Mengarahkan halaman utama untuk membaca file index.html di dalam folder templates
+    return render_template('index.html')
 
 # ==========================================
 # 2. RUTE UTAMA UNTUK ALAT ESP32
@@ -41,7 +39,7 @@ def scan_rfid():
     nama_karyawan = karyawan.data[0]['nama']
     sekarang = datetime.now(tz)
     jam = sekarang.hour
-    tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
+    tanggal_hari_ini = Clinical = sekarang.strftime("%Y-%m-%d")
     
     if 6 <= jam < 8:
         jenis_absen = "Masuk"
@@ -59,3 +57,7 @@ def scan_rfid():
     supabase.table('log_absensi').insert(data_insert).execute()
     
     return jsonify({"status": "sukses", "pesan": f"Halo {nama_karyawan}, Absen Berhasil!"}), 200
+
+# Kebutuhan pengujian lokal di komputer
+if __name__ == '__main__':
+    app.run(debug=True)
