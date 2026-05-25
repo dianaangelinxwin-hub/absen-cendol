@@ -67,22 +67,19 @@
     </div>
 
     <script>
-        // Konfigurasi Supabase (Base URL tanpa /rest/v1/)
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
         const SUPABASE_KEY = 'sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Fungsi untuk mengambil data log absensi
         async function fetchLogAbsensi() {
             try {
-                // Ambil tanggal hari ini saja untuk memperingan kinerja
                 const hariIni = new Date().toISOString().split('T')[0];
                 
                 const { data, error } = await supabase
                     .from('log_absensi')
                     .select('*')
                     .gte('waktu_tap', `${hariIni}T00:00:00Z`)
-                    .order('waktu_tap', { ascending: false }); // Urutkan dari yang paling baru
+                    .order('waktu_tap', { ascending: false });
 
                 if (error) throw error;
 
@@ -92,16 +89,13 @@
             }
         }
 
-        // Fungsi untuk memperbarui HTML tabel dan kartu statistik
         function perbaruiTampilan(data) {
             const tabelBody = document.getElementById('tabel-body');
             
-            // Hitung statistik
             document.getElementById('total-tap').innerText = data.length;
             document.getElementById('total-masuk').innerText = data.filter(d => d.jenis_absen === 'Masuk').length;
             document.getElementById('total-pulang').innerText = data.filter(d => d.jenis_absen === 'Pulang').length;
 
-            // Kosongkan tabel
             tabelBody.innerHTML = '';
 
             if (data.length === 0) {
@@ -109,12 +103,8 @@
                 return;
             }
 
-            // Masukkan data baru ke tabel
             data.forEach(log => {
-                // Rapikan format waktu
                 const waktu = new Date(log.waktu_tap).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                
-                // Beri warna berbeda untuk Masuk (hijau) dan Pulang (oranye)
                 const warnaBadge = log.jenis_absen === 'Masuk' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
 
                 const baris = `
@@ -133,15 +123,11 @@
             });
         }
 
-        // Jam Digital Real-time di Pojok Kanan Atas
         setInterval(() => {
             document.getElementById('jam-digital').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }) + ' WIB';
         }, 1000);
 
-        // Tarik data pertama kali saat web dibuka
         fetchLogAbsensi();
-
-        // Tarik data otomatis setiap 5 detik (5000 milidetik)
         setInterval(fetchLogAbsensi, 5000);
     </script>
 </body>
