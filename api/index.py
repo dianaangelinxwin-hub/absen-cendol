@@ -5,11 +5,27 @@ import pytz
 
 app = Flask(__name__)
 
-SUPABASE_URL = "URL_SUPABASE_ANDA"
-SUPABASE_KEY = "API_KEY_ANON_ANDA"
+# ==========================================
+# KONFIGURASI SUPABASE (Masukkan Kunci Anda)
+# ==========================================
+SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co/rest/v1/"
+SUPABASE_KEY = "sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
 
+# ==========================================
+# 1. RUTE HALAMAN UTAMA (Mencegah Crash di Vercel)
+# ==========================================
+@app.route('/', methods=['GET'])
+def halaman_utama():
+    return jsonify({
+        "status": "Online",
+        "pesan": "Mesin Absensi Vercel Siap Menerima Data!"
+    }), 200
+
+# ==========================================
+# 2. RUTE UTAMA UNTUK ALAT ESP32
+# ==========================================
 @app.route('/api/scan', methods=['POST'])
 def scan_rfid():
     data = request.json
