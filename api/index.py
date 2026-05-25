@@ -3,8 +3,8 @@ from supabase import create_client, Client
 from datetime import datetime
 import pytz
 
-# PERBAIKAN DI BARIS INI: Memberi tahu Vercel lokasi folder templates yang benar
-app = Flask(__name__, template_folder='../templates')
+# KEMBALI KE STANDAR: Flask otomatis mencari folder 'templates' di tempat yang sama
+app = Flask(__name__)
 
 # ==========================================
 # KONFIGURASI SUPABASE 
@@ -19,7 +19,6 @@ tz = pytz.timezone('Asia/Jakarta')
 # ==========================================
 @app.route('/', methods=['GET'])
 def halaman_utama():
-    # Sekarang Vercel tidak akan kebingungan lagi mencari index.html
     return render_template('index.html')
 
 # ==========================================
