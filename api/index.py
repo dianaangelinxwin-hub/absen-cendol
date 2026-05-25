@@ -3,10 +3,11 @@ from supabase import create_client, Client
 from datetime import datetime
 import pytz
 
-app = Flask(__name__)
+# PERBAIKAN DI BARIS INI: Memberi tahu Vercel lokasi folder templates yang benar
+app = Flask(__name__, template_folder='../templates')
 
 # ==========================================
-# KONFIGURASI SUPABASE (Kunci Anda Sudah Terpasang)
+# KONFIGURASI SUPABASE 
 # ==========================================
 SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co/rest/v1/"
 SUPABASE_KEY = "sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8"
@@ -14,11 +15,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
 
 # ==========================================
-# 1. RUTE HALAMAN UTAMA (Membuka Dashboard Web Admin)
+# 1. RUTE HALAMAN UTAMA (Dashboard Web Admin)
 # ==========================================
 @app.route('/', methods=['GET'])
 def halaman_utama():
-    # Mengarahkan halaman utama untuk membaca file index.html di dalam folder templates
+    # Sekarang Vercel tidak akan kebingungan lagi mencari index.html
     return render_template('index.html')
 
 # ==========================================
@@ -39,7 +40,7 @@ def scan_rfid():
     nama_karyawan = karyawan.data[0]['nama']
     sekarang = datetime.now(tz)
     jam = sekarang.hour
-    tanggal_hari_ini = Clinical = sekarang.strftime("%Y-%m-%d")
+    tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
     
     if 6 <= jam < 8:
         jenis_absen = "Masuk"
