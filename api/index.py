@@ -1,15 +1,22 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from supabase import create_client, Client
 from datetime import datetime
 import pytz
 
-# KEMBALI KE STANDAR: Flask otomatis mencari folder 'templates' di tempat yang sama
-app = Flask(__name__)
+# ==========================================
+# TRIK VERCEL: Mencari path absolut folder templates
+# ==========================================
+base_dir = os.path.dirname(os.path.abspath(__file__))
+template_dir = os.path.join(base_dir, 'templates')
+
+app = Flask(__name__, template_folder=template_dir)
 
 # ==========================================
 # KONFIGURASI SUPABASE 
 # ==========================================
-SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co/rest/v1/"
+# Catatan: URL Supabase sebaiknya base-nya saja (tanpa /rest/v1/ di ujungnya)
+SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co"
 SUPABASE_KEY = "sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
