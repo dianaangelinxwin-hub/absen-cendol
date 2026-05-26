@@ -32,6 +32,7 @@ HTML_DASHBOARD = """
             .no-print { display: none !important; }
             body { background-color: white !important; color: black !important; }
             .print-area { width: 100% !important; box-shadow: none !important; border: none !important; }
+            th { background-color: #2563eb !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             th, td { border: 1px solid #ddd !important; }
         }
     </style>
@@ -55,12 +56,15 @@ HTML_DASHBOARD = """
 
     <div class="container mx-auto mt-6 px-4 mb-10">
         
-        <div class="flex space-x-2 mb-6 no-print border-b border-gray-200 pb-2">
-            <button onclick="bukaTab('live')" id="btn-tab-live" class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition">
+        <div class="flex space-x-2 mb-6 no-print border-b border-gray-200 pb-2 overflow-x-auto">
+            <button onclick="bukaTab('live')" id="btn-tab-live" class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap">
                 <i class="fa-solid fa-desktop mr-2"></i>Live Monitor
             </button>
-            <button onclick="bukaTab('rekap')" id="btn-tab-rekap" class="px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition">
-                <i class="fa-solid fa-file-lines mr-2"></i>Rekap & Laporan
+            <button onclick="bukaTab('rekap')" id="btn-tab-rekap" class="px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap">
+                <i class="fa-solid fa-calendar-day mr-2"></i>Rekap Harian
+            </button>
+            <button onclick="bukaTab('bulanan')" id="btn-tab-bulanan" class="px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap">
+                <i class="fa-solid fa-calendar-days mr-2"></i>Rekap Bulanan
             </button>
         </div>
 
@@ -116,7 +120,7 @@ HTML_DASHBOARD = """
 
         <div id="tab-rekap" class="hidden print-area">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6 no-print">
-                <h2 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide border-b pb-2"><i class="fa-solid fa-filter mr-2"></i>Filter Laporan</h2>
+                <h2 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide border-b pb-2"><i class="fa-solid fa-filter mr-2"></i>Filter Laporan Harian</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Dari Tanggal</label>
@@ -130,7 +134,7 @@ HTML_DASHBOARD = """
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Nama Spesifik (Opsional)</label>
                         <select id="filter-nama" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                             <option value="SEMUA">-- Semua Orang --</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="flex space-x-2">
                         <button onclick="tarikDataRekap()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-sm">
@@ -141,7 +145,7 @@ HTML_DASHBOARD = """
             </div>
 
             <div class="hidden print:block text-center mb-6">
-                <h1 class="text-2xl font-bold uppercase">Laporan Presensi</h1>
+                <h1 class="text-2xl font-bold uppercase">Laporan Presensi Harian</h1>
                 <h2 class="text-lg font-semibold text-gray-700">SMK Kota Mungkid</h2>
                 <p id="teks-periode-cetak" class="text-sm text-gray-500 mt-1">Periode: -</p>
             </div>
@@ -151,7 +155,7 @@ HTML_DASHBOARD = """
                     <h2 class="font-bold text-md"><i class="fa-solid fa-file-invoice mr-2"></i>Hasil Pencarian</h2>
                     <div class="space-x-2">
                         <button onclick="downloadCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow transition">
-                            <i class="fa-solid fa-file-excel mr-1"></i> Excel (CSV)
+                            <i class="fa-solid fa-file-excel mr-1"></i> Excel
                         </button>
                         <button onclick="window.print()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded shadow transition">
                             <i class="fa-solid fa-print mr-1"></i> Cetak A4
@@ -160,17 +164,65 @@ HTML_DASHBOARD = """
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse" id="tabel-rekap-utama">
-                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-gray-200">
+                        <thead class="bg-blue-600 text-white text-xs uppercase font-bold border-b border-blue-700">
                             <tr>
-                                <th class="px-6 py-4">Tanggal</th>
-                                <th class="px-6 py-4">Waktu</th>
-                                <th class="px-6 py-4">Nama</th>
-                                <th class="px-6 py-4">Jenis</th>
-                                <th class="px-6 py-4">Status</th>
+                                <th class="px-4 py-3">No</th>
+                                <th class="px-4 py-3">Hari dan Tanggal</th>
+                                <th class="px-4 py-3">Nama</th>
+                                <th class="px-4 py-3 text-center">Jam Datang</th>
+                                <th class="px-4 py-3 text-center">Jam Pulang</th>
+                                <th class="px-4 py-3 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody id="tabel-body-rekap" class="text-sm divide-y divide-gray-100">
-                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Silakan atur filter dan klik Cari untuk menampilkan data laporan.</td></tr>
+                            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Silakan atur filter dan klik Cari untuk menampilkan laporan.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-bulanan" class="hidden print-area">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6 no-print">
+                <h2 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide border-b pb-2"><i class="fa-solid fa-filter mr-2"></i>Filter Laporan Bulanan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Pilih Bulan</label>
+                        <input type="month" id="filter-bulan" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="tarikDataBulanan()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-sm">
+                            <i class="fa-solid fa-chart-pie mr-2"></i>Lihat Statistik
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden print:block text-center mb-6">
+                <h1 class="text-2xl font-bold uppercase">Laporan Presensi Bulanan</h1>
+                <h2 class="text-lg font-semibold text-gray-700">SMK Kota Mungkid</h2>
+                <p id="teks-bulan-cetak" class="text-sm text-gray-500 mt-1">Bulan: -</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-slate-100 text-slate-700 p-4 flex justify-between items-center border-b border-gray-200 no-print">
+                    <h2 class="font-bold text-md"><i class="fa-solid fa-chart-column mr-2"></i>Statistik Kehadiran Bulanan</h2>
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded shadow transition">
+                        <i class="fa-solid fa-print mr-1"></i> Cetak A4
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-blue-600 text-white text-xs uppercase font-bold border-b border-blue-700">
+                            <tr>
+                                <th class="px-6 py-3 w-16">No</th>
+                                <th class="px-6 py-3">Nama Siswa/Karyawan</th>
+                                <th class="px-6 py-3 text-center">Total Masuk (Hari)</th>
+                                <th class="px-6 py-3 text-center">Total Pulang (Hari)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-body-bulanan" class="text-sm divide-y divide-gray-100">
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400">Silakan pilih bulan dan klik Lihat Statistik.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -185,37 +237,39 @@ HTML_DASHBOARD = """
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let mapKaryawan = {}; 
-        let dataRekapTersimpan = []; // Menyimpan data sementara untuk fungsi export Excel
+        let dataSiapCetak = []; 
 
-        // 1. Jam Digital
         setInterval(() => {
             document.getElementById('jam-digital').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }) + ' WIB';
         }, 1000);
 
-        // 2. Perpindahan Tab (Live vs Rekap)
         function bukaTab(namaTab) {
             document.getElementById('tab-live').classList.add('hidden');
             document.getElementById('tab-rekap').classList.add('hidden');
+            document.getElementById('tab-bulanan').classList.add('hidden');
             
-            document.getElementById('btn-tab-live').className = 'px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition';
-            document.getElementById('btn-tab-rekap').className = 'px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition';
+            document.getElementById('btn-tab-live').className = 'px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
+            document.getElementById('btn-tab-rekap').className = 'px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
+            document.getElementById('btn-tab-bulanan').className = 'px-5 py-2 bg-gray-200 text-gray-600 hover:bg-gray-300 font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
             
             if (namaTab === 'live') {
                 document.getElementById('tab-live').classList.remove('hidden');
-                document.getElementById('btn-tab-live').className = 'px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition';
-            } else {
+                document.getElementById('btn-tab-live').className = 'px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
+            } else if (namaTab === 'rekap') {
                 document.getElementById('tab-rekap').classList.remove('hidden');
-                document.getElementById('btn-tab-rekap').className = 'px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition';
+                document.getElementById('btn-tab-rekap').className = 'px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
+            } else {
+                document.getElementById('tab-bulanan').classList.remove('hidden');
+                document.getElementById('btn-tab-bulanan').className = 'px-5 py-2 bg-blue-600 text-white font-semibold rounded-t-lg shadow-sm transition whitespace-nowrap';
             }
         }
 
-        // 3. Mengambil Kamus Nama (Tabel Karyawan)
         async function muatDaftarNama() {
             const { data, error } = await supabaseClient.from('karyawan').select('uid_kartu, nama').order('nama', { ascending: true });
             if (!error && data) {
                 const selectEl = document.getElementById('filter-nama');
                 data.forEach(k => {
-                    mapKaryawan[k.uid_kartu] = k.nama; // Menyimpan memori terjemahan UID ke Nama
+                    mapKaryawan[k.uid_kartu] = k.nama;
                     if (k.nama !== "BELUM TERDAFTAR") {
                         selectEl.innerHTML += `<option value="${k.uid_kartu}">${k.nama}</option>`;
                     }
@@ -223,7 +277,6 @@ HTML_DASHBOARD = """
             }
         }
 
-        // 4. Proses Tab LIVE (Berjalan Otomatis)
         async function muatLiveHarian() {
             try {
                 const now = new Date();
@@ -270,7 +323,6 @@ HTML_DASHBOARD = """
             } catch (err) { console.log(err); }
         }
 
-        // 5. Proses Tab REKAP (Manual via Tombol Cari)
         async function tarikDataRekap() {
             const tglStart = document.getElementById('filter-start').value;
             const tglEnd = document.getElementById('filter-end').value;
@@ -282,16 +334,17 @@ HTML_DASHBOARD = """
                 return;
             }
 
-            tabelBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-blue-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Sedang menggali database...</td></tr>';
-            document.getElementById('teks-periode-cetak').innerText = `Periode: ${tglStart} s/d ${tglEnd}`;
+            tabelBody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-blue-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Sedang menyusun laporan 1 baris...</td></tr>';
+            
+            const dateS = new Date(tglStart); const dateE = new Date(tglEnd);
+            document.getElementById('teks-periode-cetak').innerText = `Periode: ${dateS.toLocaleDateString('id-ID')} s/d ${dateE.toLocaleDateString('id-ID')}`;
 
             try {
                 let query = supabaseClient.from('log_absensi').select('*')
                             .gte('waktu_tap', `${tglStart}T00:00:00`)
                             .lte('waktu_tap', `${tglEnd}T23:59:59`)
-                            .order('waktu_tap', { ascending: true }); // Diurutkan dari terlama ke terbaru untuk laporan
+                            .order('waktu_tap', { ascending: true });
 
-                // Jika memfilter 1 orang saja
                 if(uidPilihan !== 'SEMUA') {
                     query = query.eq('uid_kartu', uidPilihan);
                 }
@@ -299,77 +352,193 @@ HTML_DASHBOARD = """
                 const { data, error } = await query;
                 if (error) throw error;
 
-                dataRekapTersimpan = data || [];
+                const dataMentah = data || [];
                 tabelBody.innerHTML = '';
 
-                if (dataRekapTersimpan.length === 0) {
-                    tabelBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Tidak ada data absensi pada periode tersebut.</td></tr>';
+                if (dataMentah.length === 0) {
+                    tabelBody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Tidak ada data absensi pada periode tersebut.</td></tr>';
                     return;
                 }
 
-                dataRekapTersimpan.forEach(log => {
+                const groupedObj = {};
+                const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                
+                dataMentah.forEach(log => {
                     const dateObj = new Date(log.waktu_tap);
-                    const tglText = dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                    const waktuText = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    const tglSort = dateObj.toISOString().split('T')[0]; 
+                    const namaHariIni = namaHari[dateObj.getDay()];
+                    const tglText = `${namaHariIni}, ${dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+                    const waktuText = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     const namaAsli = mapKaryawan[log.uid_kartu] || log.uid_kartu;
+                    
+                    const key = log.uid_kartu + "_" + tglSort;
+
+                    if(!groupedObj[key]) {
+                        groupedObj[key] = {
+                            tglSort: tglSort,
+                            tanggal: tglText,
+                            nama: namaAsli,
+                            datang: '-',
+                            pulang: '-'
+                        };
+                    }
+
+                    if(log.jenis_absen === 'Masuk') {
+                        groupedObj[key].datang = waktuText;
+                    } else if (log.jenis_absen === 'Pulang') {
+                        groupedObj[key].pulang = waktuText;
+                    }
+                });
+
+                dataSiapCetak = Object.values(groupedObj).sort((a, b) => a.tglSort.localeCompare(b.tglSort));
+
+                let noUrut = 1;
+                dataSiapCetak.forEach(item => {
+                    let statusCetak = "";
+                    let warnaStatus = "";
+                    
+                    if (item.datang !== '-' && item.pulang !== '-') {
+                        statusCetak = "Datang & Pulang";
+                        warnaStatus = "text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200";
+                    } else if (item.datang !== '-' && item.pulang === '-') {
+                        statusCetak = "Datang Saja";
+                        warnaStatus = "text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-200";
+                    } else if (item.datang === '-' && item.pulang !== '-') {
+                        statusCetak = "Pulang Saja";
+                        warnaStatus = "text-orange-600 bg-orange-50 px-2 py-1 rounded-full border border-orange-200";
+                    }
 
                     tabelBody.innerHTML += `
                         <tr class="hover:bg-slate-50 border-b border-gray-100">
-                            <td class="px-6 py-3 text-slate-600">${tglText}</td>
-                            <td class="px-6 py-3 font-mono text-slate-500">${waktuText}</td>
-                            <td class="px-6 py-3 font-bold text-slate-700">${namaAsli}</td>
-                            <td class="px-6 py-3 font-semibold text-slate-600">${log.jenis_absen}</td>
-                            <td class="px-6 py-3 text-blue-600">${log.status}</td>
+                            <td class="px-4 py-3 text-slate-500">${noUrut++}</td>
+                            <td class="px-4 py-3 text-slate-700">${item.tanggal}</td>
+                            <td class="px-4 py-3 font-bold text-slate-800">${item.nama}</td>
+                            <td class="px-4 py-3 text-center font-mono text-slate-600">${item.datang}</td>
+                            <td class="px-4 py-3 text-center font-mono text-slate-600">${item.pulang}</td>
+                            <td class="px-4 py-3 text-center"><span class="text-xs font-bold ${warnaStatus}">${statusCetak}</span></td>
                         </tr>
                     `;
                 });
+
             } catch (err) {
                 console.error(err);
-                tabelBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Gagal menarik data rekap.</td></tr>';
+                tabelBody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Gagal menarik data rekap.</td></tr>';
             }
         }
 
-        // 6. Fungsi Download CSV (Excel)
+        async function tarikDataBulanan() {
+            const blnValue = document.getElementById('filter-bulan').value;
+            const tabelBody = document.getElementById('tabel-body-bulanan');
+
+            if(!blnValue) {
+                alert("Juragan, pilih bulannya dulu ya!");
+                return;
+            }
+
+            tabelBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-blue-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Menghitung statistik bulanan...</td></tr>';
+            
+            const namaBulan = new Date(blnValue + "-01").toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            document.getElementById('teks-bulan-cetak').innerText = `Bulan: ${namaBulan}`;
+
+            try {
+                const arrTgl = blnValue.split('-');
+                const yyyy = arrTgl[0];
+                const mm = arrTgl[1];
+                const lastDay = new Date(yyyy, mm, 0).getDate(); 
+                
+                const startStr = `${blnValue}-01T00:00:00`;
+                const endStr = `${blnValue}-${lastDay}T23:59:59`;
+
+                const { data, error } = await supabaseClient.from('log_absensi')
+                    .select('*')
+                    .gte('waktu_tap', startStr)
+                    .lte('waktu_tap', endStr);
+                    
+                if (error) throw error;
+
+                const dataMentah = data || [];
+                tabelBody.innerHTML = '';
+
+                if (dataMentah.length === 0) {
+                    tabelBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">Tidak ada absensi di bulan ini.</td></tr>';
+                    return;
+                }
+
+                let stats = {};
+                
+                dataMentah.forEach(log => {
+                    const uid = log.uid_kartu;
+                    if(!stats[uid]) {
+                        stats[uid] = { 
+                            nama: mapKaryawan[uid] || uid, 
+                            masuk: 0, 
+                            pulang: 0 
+                        };
+                    }
+                    if(log.jenis_absen === 'Masuk') stats[uid].masuk++;
+                    else if (log.jenis_absen === 'Pulang') stats[uid].pulang++;
+                });
+
+                const arrStats = Object.values(stats).sort((a, b) => a.nama.localeCompare(b.nama));
+                
+                let noUrut = 1;
+                arrStats.forEach(item => {
+                    tabelBody.innerHTML += `
+                        <tr class="hover:bg-slate-50 border-b border-gray-100">
+                            <td class="px-6 py-3 text-slate-500">${noUrut++}</td>
+                            <td class="px-6 py-3 font-bold text-slate-800">${item.nama}</td>
+                            <td class="px-6 py-3 text-center font-bold text-green-600">${item.masuk}</td>
+                            <td class="px-6 py-3 text-center font-bold text-orange-600">${item.pulang}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch(err) {
+                console.error(err);
+                tabelBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Gagal menarik data bulanan.</td></tr>';
+            }
+        }
+
         function downloadCSV() {
-            if(dataRekapTersimpan.length === 0) {
+            if(dataSiapCetak.length === 0) {
                 alert("Belum ada data rekap yang ditarik. Silakan klik Cari dulu.");
                 return;
             }
             
-            // Membuat Header Kolom Excel
-            let isiCSV = "Tanggal,Waktu,Nama,Jenis Absen,Status\\n";
+            let isiCSV = "No,Hari Tanggal,Nama,Jam Datang,Jam Pulang,Status\\n";
+            let noCSV = 1;
             
-            dataRekapTersimpan.forEach(log => {
-                const dateObj = new Date(log.waktu_tap);
-                const tglText = dateObj.toLocaleDateString('id-ID');
-                const waktuText = dateObj.toLocaleTimeString('id-ID');
-                const namaAsli = mapKaryawan[log.uid_kartu] || log.uid_kartu;
-                
-                isiCSV += `${tglText},${waktuText},"${namaAsli}",${log.jenis_absen},${log.status}\\n`;
+            dataSiapCetak.forEach(item => {
+                let statusCetak = "";
+                if (item.datang !== '-' && item.pulang !== '-') statusCetak = "Datang & Pulang";
+                else if (item.datang !== '-' && item.pulang === '-') statusCetak = "Datang Saja";
+                else if (item.datang === '-' && item.pulang !== '-') statusCetak = "Pulang Saja";
+
+                isiCSV += `${noCSV++},"${item.tanggal}","${item.nama}",${item.datang},${item.pulang},${statusCetak}\\n`;
             });
 
-            // Men-trigger unduhan di browser
             const blob = new Blob([isiCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", "Laporan_Absensi_SMK.csv");
+            link.setAttribute("download", "Laporan_Absensi_Harian.csv");
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // Eksekusi Awal Saat Web Dibuka
         (async function init() {
-            // Set tanggal rekap default ke hari ini
             const hariIniLokal = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             document.getElementById('filter-start').value = hariIniLokal;
             document.getElementById('filter-end').value = hariIniLokal;
+            
+            const blnLokal = hariIniLokal.substring(0, 7); // Format YYYY-MM
+            document.getElementById('filter-bulan').value = blnLokal;
 
             await muatDaftarNama();
             muatLiveHarian();
-            setInterval(muatLiveHarian, 5000); // Live update tiap 5 detik
+            setInterval(muatLiveHarian, 5000); 
         })();
     </script>
 </body>
@@ -406,7 +575,7 @@ def rute_master(path):
             jam = sekarang.hour
             tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
             
-            # ATURAN JAM (Kembali Longgar Untuk Testing)
+            # ATURAN JAM (Longgar Untuk Testing)
             if 0 <= jam < 11:
                 jenis_absen = "Masuk"
             elif 11 <= jam <= 23:
