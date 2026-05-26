@@ -9,7 +9,7 @@ app = Flask(__name__)
 # KONFIGURASI SUPABASE 
 # ==========================================
 SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co"
-SUPABASE_KEY = "sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
 
@@ -81,7 +81,8 @@ HTML_DASHBOARD = """
     </div>
     <script>
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
-        const SUPABASE_KEY = 'sb_secret_Aq7y_yw0Q0Jf2eMwpYmQFw_NbIHh8N8';
+        // INGAT: Ganti kunci di baris bawah ini juga dengan kunci 'eyJ...' yang sama!
+        const SUPABASE_KEY = 'PASTE_KUNCI_EYJ_ANDA_DI_SINI';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function fetchLogAbsensi() {
