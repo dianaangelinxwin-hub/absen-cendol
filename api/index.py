@@ -407,9 +407,9 @@ def rute_master(path):
             tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
             
             # ATURAN JAM (Kembali Longgar Untuk Testing)
-            if 0 <= jam < 13:
+            if 0 <= jam < 11:
                 jenis_absen = "Masuk"
-            elif 13 <= jam <= 23:
+            elif 11 <= jam <= 23:
                 jenis_absen = "Pulang"
             else:
                 return jsonify({"status": "gagal", "pesan": f"Di luar jam absen!"}), 403
