@@ -83,7 +83,6 @@ HTML_DASHBOARD = """
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc';
         
-        // --- NAMA VARIABEL DIGANTI MENJADI supabaseClient AGAR TIDAK BENTROK ---
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         setInterval(() => {
@@ -97,7 +96,6 @@ HTML_DASHBOARD = """
                 const localISOTime = (new Date(now - offset)).toISOString().slice(0, -1);
                 const hariIni = localISOTime.split('T')[0];
 
-                // --- MENGGUNAKAN supabaseClient ---
                 const { data, error } = await supabaseClient
                     .from('log_absensi')
                     .select('*')
@@ -166,13 +164,12 @@ HTML_DASHBOARD = """
 """
 
 # ==========================================
-# RUTE SAPU JAGAT (Anti Vercel Error 405)
+# RUTE SAPU JAGAT & AUTO-SAVE KARTU
 # ==========================================
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
 def rute_master(path):
     
-    # 1. JIKA ADA KIRIMAN DATA DARI ALAT ESP32 (Metode POST)
     if request.method == 'POST':
         try:
             data = request.json
@@ -182,15 +179,22 @@ def rute_master(path):
             uid_kartu = data['uid']
             karyawan = supabase.table('karyawan').select('*').eq('uid_kartu', uid_kartu).execute()
             
+            # --- AUTO-SAVE KARTU TIDAK DIKENAL ---
             if not karyawan.data:
-                return jsonify({"status": "gagal", "pesan": "Kartu Tidak Dikenal"}), 404
+                data_kartu_baru = {"uid_kartu": uid_kartu, "nama": "BELUM TERDAFTAR"}
+                supabase.table('karyawan').insert(data_kartu_baru).execute()
+                return jsonify({"status": "gagal", "pesan": "Kartu Disimpan!"}), 404
                 
             nama_karyawan = karyawan.data[0]['nama']
+
+            if nama_karyawan == "BELUM TERDAFTAR":
+                return jsonify({"status": "gagal", "pesan": "Ganti Nama Dulu!"}), 403
+            
             sekarang = datetime.now(tz)
-            jam = sekarang.hour
+            jam =媽媽 = sekarang.hour
             tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
             
-            # ATURAN JAM DILONGGARKAN UNTUK TESTING
+            # ATURAN JAM JAM LONGGAR UNTUK TESTING
             if 0 <= jam < 13:
                 jenis_absen = "Masuk"
             elif 13 <= jam <= 23:
@@ -211,7 +215,6 @@ def rute_master(path):
         except Exception as e:
             return jsonify({"status": "gagal", "pesan": "Error Sistem"}), 500
 
-    # 2. JIKA HANYA MEMBUKA LEWAT BROWSER (Metode GET)
     return render_template_string(HTML_DASHBOARD)
 
 if __name__ == '__main__':
