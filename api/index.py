@@ -164,9 +164,9 @@ def rute_master(path):
             jam = sekarang.hour
             tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
             
-            if 6 <= jam < 8:
+            if 0 <= jam < 13:
                 jenis_absen = "Masuk"
-            elif 16 <= jam < 18:
+            elif 13 <= jam < 23:
                 jenis_absen = "Pulang"
             else:
                 return jsonify({"status": "gagal", "pesan": f"Di luar jam absen!"}), 403
