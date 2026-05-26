@@ -9,7 +9,6 @@ app = Flask(__name__)
 # KONFIGURASI SUPABASE 
 # ==========================================
 SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co"
-# MASUKKAN KEMBALI KUNCI API 'eyJ...' ANDA DI BAWAH INI:
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
@@ -82,20 +81,34 @@ HTML_DASHBOARD = """
     </div>
     <script>
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
-        // INGAT: Ganti kunci di baris bawah ini juga dengan kunci 'eyJ...' yang sama!
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Pindahkan jam ke atas agar selalu jalan duluan
+        setInterval(() => {
+            document.getElementById('jam-digital').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }) + ' WIB';
+        }, 1000);
+
         async function fetchLogAbsensi() {
             try {
-                const hariIni = new Date().toISOString().split('T')[0];
+                // Ambil tanggal hari ini (waktu lokal browser)
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - offset)).toISOString().slice(0, -1);
+                const hariIni = localISOTime.split('T')[0];
+
                 const { data, error } = await supabase
                     .from('log_absensi')
                     .select('*')
-                    .gte('waktu_tap', `${hariIni}T00:00:00Z`)
+                    .gte('waktu_tap', `${hariIni}T00:00:00`)
                     .order('waktu_tap', { ascending: false });
-                if (error) throw error;
-                perbaruiTampilan(data);
+                    
+                if (error) {
+                    console.error('Error dari Supabase:', error);
+                    return; // Berhenti jika error, jangan crash
+                }
+                
+                perbaruiTampilan(data || []); // Antisipasi jika data null
             } catch (err) {
                 console.error('Gagal mengambil data:', err.message);
             }
@@ -103,36 +116,53 @@ HTML_DASHBOARD = """
 
         function perbaruiTampilan(data) {
             const tabelBody = document.getElementById('tabel-body');
+            
+            // Hitung total dengan aman
             document.getElementById('total-tap').innerText = data.length;
             document.getElementById('total-masuk').innerText = data.filter(d => d.jenis_absen === 'Masuk').length;
             document.getElementById('total-pulang').innerText = data.filter(d => d.jenis_absen === 'Pulang').length;
+            
             tabelBody.innerHTML = '';
+            
             if (data.length === 0) {
                 tabelBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">Belum ada data absensi hari ini.</td></tr>';
                 return;
             }
+            
             data.forEach(log => {
-                const waktu = new Date(log.waktu_tap).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const warnaBadge = log.jenis_absen === 'Masuk' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+                // Format waktu yang aman
+                let waktuText = "Waktu Tidak Valid";
+                if (log.waktu_tap) {
+                    const dateObj = new Date(log.waktu_tap);
+                    waktuText = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                }
+                
+                // Pastikan nilai jenis_absen ada
+                const jenisAbsen = log.jenis_absen || 'Tidak Diketahui';
+                const warnaBadge = jenisAbsen === 'Masuk' ? 'bg-green-100 text-green-800' : 
+                                   (jenisAbsen === 'Pulang' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800');
+                                   
+                const status = log.status || '-';
+                
                 const baris = `
                     <tr class="border-b border-gray-200 hover:bg-gray-50 transition duration-150">
-                        <td class="px-6 py-4 font-mono text-gray-600">${waktu} WIB</td>
-                        <td class="px-6 py-4 font-bold">${log.uid_kartu}</td>
+                        <td class="px-6 py-4 font-mono text-gray-600">${waktuText}</td>
+                        <td class="px-6 py-4 font-bold">${log.uid_kartu || '-'}</td>
                         <td class="px-6 py-4">
                             <span class="px-3 py-1 rounded-full text-xs font-bold ${warnaBadge}">
-                                ${log.jenis_absen}
+                                ${jenisAbsen}
                             </span>
                         </td>
-                        <td class="px-6 py-4 font-semibold text-blue-600">${log.status}</td>
+                        <td class="px-6 py-4 font-semibold text-blue-600">${status}</td>
                     </tr>
                 `;
                 tabelBody.innerHTML += baris;
             });
         }
-        setInterval(() => {
-            document.getElementById('jam-digital').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }) + ' WIB';
-        }, 1000);
+        
+        // Panggil pertama kali
         fetchLogAbsensi();
+        // Set auto-refresh
         setInterval(fetchLogAbsensi, 5000);
     </script>
 </body>
@@ -164,9 +194,10 @@ def rute_master(path):
             jam = sekarang.hour
             tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
             
+            # ATURAN JAM DILONGGARKAN UNTUK TESTING
             if 0 <= jam < 13:
                 jenis_absen = "Masuk"
-            elif 13 <= jam < 23:
+            elif 13 <= jam <= 23:
                 jenis_absen = "Pulang"
             else:
                 return jsonify({"status": "gagal", "pesan": f"Di luar jam absen!"}), 403
