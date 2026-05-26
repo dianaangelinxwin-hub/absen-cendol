@@ -83,7 +83,7 @@ HTML_DASHBOARD = """
     <script>
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
         // INGAT: Ganti kunci di baris bawah ini juga dengan kunci 'eyJ...' yang sama!
-        const SUPABASE_KEY = 'PASTE_KUNCI_EYJ_ANDA_DI_SINI';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function fetchLogAbsensi() {
