@@ -82,22 +82,23 @@ HTML_DASHBOARD = """
     <script>
         const SUPABASE_URL = 'https://xgsnzorbquzmzgsgwrfj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // --- NAMA VARIABEL DIGANTI MENJADI supabaseClient AGAR TIDAK BENTROK ---
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Pindahkan jam ke atas agar selalu jalan duluan
         setInterval(() => {
             document.getElementById('jam-digital').innerText = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' }) + ' WIB';
         }, 1000);
 
         async function fetchLogAbsensi() {
             try {
-                // Ambil tanggal hari ini (waktu lokal browser)
                 const now = new Date();
                 const offset = now.getTimezoneOffset() * 60000;
                 const localISOTime = (new Date(now - offset)).toISOString().slice(0, -1);
                 const hariIni = localISOTime.split('T')[0];
 
-                const { data, error } = await supabase
+                // --- MENGGUNAKAN supabaseClient ---
+                const { data, error } = await supabaseClient
                     .from('log_absensi')
                     .select('*')
                     .gte('waktu_tap', `${hariIni}T00:00:00`)
@@ -105,10 +106,10 @@ HTML_DASHBOARD = """
                     
                 if (error) {
                     console.error('Error dari Supabase:', error);
-                    return; // Berhenti jika error, jangan crash
+                    return; 
                 }
                 
-                perbaruiTampilan(data || []); // Antisipasi jika data null
+                perbaruiTampilan(data || []); 
             } catch (err) {
                 console.error('Gagal mengambil data:', err.message);
             }
@@ -117,7 +118,6 @@ HTML_DASHBOARD = """
         function perbaruiTampilan(data) {
             const tabelBody = document.getElementById('tabel-body');
             
-            // Hitung total dengan aman
             document.getElementById('total-tap').innerText = data.length;
             document.getElementById('total-masuk').innerText = data.filter(d => d.jenis_absen === 'Masuk').length;
             document.getElementById('total-pulang').innerText = data.filter(d => d.jenis_absen === 'Pulang').length;
@@ -130,14 +130,12 @@ HTML_DASHBOARD = """
             }
             
             data.forEach(log => {
-                // Format waktu yang aman
                 let waktuText = "Waktu Tidak Valid";
                 if (log.waktu_tap) {
                     const dateObj = new Date(log.waktu_tap);
                     waktuText = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
                 }
                 
-                // Pastikan nilai jenis_absen ada
                 const jenisAbsen = log.jenis_absen || 'Tidak Diketahui';
                 const warnaBadge = jenisAbsen === 'Masuk' ? 'bg-green-100 text-green-800' : 
                                    (jenisAbsen === 'Pulang' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800');
@@ -160,9 +158,7 @@ HTML_DASHBOARD = """
             });
         }
         
-        // Panggil pertama kali
         fetchLogAbsensi();
-        // Set auto-refresh
         setInterval(fetchLogAbsensi, 5000);
     </script>
 </body>
