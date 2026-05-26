@@ -9,6 +9,7 @@ app = Flask(__name__)
 # KONFIGURASI SUPABASE 
 # ==========================================
 SUPABASE_URL = "https://xgsnzorbquzmzgsgwrfj.supabase.co"
+# MASUKKAN KEMBALI KUNCI API 'eyJ...' ANDA DI BAWAH INI:
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnc256b3JicXV6bXpnc2d3cmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2ODQ3NTksImV4cCI6MjA5NTI2MDc1OX0.HcYBj6Cdoo4oyALiL3VxXG6DBqg2HORvBopH8fyysYc"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 tz = pytz.timezone('Asia/Jakarta')
@@ -139,48 +140,52 @@ HTML_DASHBOARD = """
 """
 
 # ==========================================
-# 1. RUTE HALAMAN UTAMA (Memanggil String HTML)
+# RUTE SAPU JAGAT (Anti Vercel Error 405)
 # ==========================================
-@app.route('/', methods=['GET'])
-def halaman_utama():
-    return render_template_string(HTML_DASHBOARD)
+@app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
+def rute_master(path):
+    
+    # 1. JIKA ADA KIRIMAN DATA DARI ALAT ESP32 (Metode POST)
+    if request.method == 'POST':
+        try:
+            data = request.json
+            if not data or 'uid' not in data:
+                return jsonify({"status": "gagal", "pesan": "Format Salah"}), 400
+                
+            uid_kartu = data['uid']
+            karyawan = supabase.table('karyawan').select('*').eq('uid_kartu', uid_kartu).execute()
+            
+            if not karyawan.data:
+                return jsonify({"status": "gagal", "pesan": "Kartu Tidak Dikenal"}), 404
+                
+            nama_karyawan = karyawan.data[0]['nama']
+            sekarang = datetime.now(tz)
+            jam = sekarang.hour
+            tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
+            
+            if 6 <= jam < 8:
+                jenis_absen = "Masuk"
+            elif 16 <= jam < 18:
+                jenis_absen = "Pulang"
+            else:
+                return jsonify({"status": "gagal", "pesan": f"Di luar jam absen!"}), 403
+                
+            log_hari_ini = supabase.table('log_absensi').select('*').eq('uid_kartu', uid_kartu).eq('jenis_absen', jenis_absen).gte('waktu_tap', f"{tanggal_hari_ini}T00:00:00+07:00").execute()
+                
+            if log_hari_ini.data:
+                return jsonify({"status": "gagal", "pesan": f"Sudah absen {jenis_absen}!"}), 409
+                
+            data_insert = {"uid_kartu": uid_kartu, "jenis_absen": jenis_absen, "status": "Hadir"}
+            supabase.table('log_absensi').insert(data_insert).execute()
+            
+            return jsonify({"status": "sukses", "pesan": f"Halo {nama_karyawan}, Absen Berhasil!"}), 200
 
-# ==========================================
-# 2. RUTE UTAMA UNTUK ALAT ESP32
-# ==========================================
-@app.route('/api/scan', methods=['POST'])
-def scan_rfid():
-    data = request.json
-    if not data or 'uid' not in data:
-        return jsonify({"status": "gagal", "pesan": "Format Salah"}), 400
-        
-    uid_kartu = data['uid']
-    karyawan = supabase.table('karyawan').select('*').eq('uid_kartu', uid_kartu).execute()
-    
-    if not karyawan.data:
-        return jsonify({"status": "gagal", "pesan": "Kartu Tidak Dikenal"}), 404
-        
-    nama_karyawan = karyawan.data[0]['nama']
-    sekarang = datetime.now(tz)
-    jam = sekarang.hour
-    tanggal_hari_ini = sekarang.strftime("%Y-%m-%d")
-    
-    if 6 <= jam < 8:
-        jenis_absen = "Masuk"
-    elif 16 <= jam < 18:
-        jenis_absen = "Pulang"
-    else:
-        return jsonify({"status": "gagal", "pesan": f"Di luar jam absen!"}), 403
-        
-    log_hari_ini = supabase.table('log_absensi').select('*').eq('uid_kartu', uid_kartu).eq('jenis_absen', jenis_absen).gte('waktu_tap', f"{tanggal_hari_ini}T00:00:00+07:00").execute()
-        
-    if log_hari_ini.data:
-        return jsonify({"status": "gagal", "pesan": f"Sudah absen {jenis_absen}!"}), 409
-        
-    data_insert = {"uid_kartu": uid_kartu, "jenis_absen": jenis_absen, "status": "Hadir"}
-    supabase.table('log_absensi').insert(data_insert).execute()
-    
-    return jsonify({"status": "sukses", "pesan": f"Halo {nama_karyawan}, Absen Berhasil!"}), 200
+        except Exception as e:
+            return jsonify({"status": "gagal", "pesan": "Error Sistem"}), 500
+
+    # 2. JIKA HANYA MEMBUKA LEWAT BROWSER (Metode GET)
+    return render_template_string(HTML_DASHBOARD)
 
 if __name__ == '__main__':
     app.run(debug=True)
